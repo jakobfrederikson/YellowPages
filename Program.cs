@@ -2,6 +2,6 @@
 using YellowPages.Menu;
 
 using var db = new YellowPagesContext();
-var menu = new Menu(db);
+var menu = new StartMenu(db);
 
-menu.StartMenu();
+menu.Start();
