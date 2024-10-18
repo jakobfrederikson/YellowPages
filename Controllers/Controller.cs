@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace YellowPages.Controllers;
 
+/// <summary>
+/// Contains CRUD operations for the Contact and Category models.
+/// </summary>
+/// <typeparam name="T">Use the Contact or Category class here</typeparam>
 internal abstract class Controller<T> where T : class
 {
 	private readonly YellowPagesContext _context;
@@ -22,7 +26,6 @@ internal abstract class Controller<T> where T : class
 			_context.Set<T>().Add(entity);
 			_context.SaveChanges();
 			Console.WriteLine($"{typeof(T).Name} created.");
-
 		}
 		catch (Exception ex)
 		{

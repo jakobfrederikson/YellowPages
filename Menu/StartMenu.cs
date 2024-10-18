@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 using System.Text;
 using System.Threading.Tasks;
 using YellowPages.Controllers;
@@ -16,23 +17,31 @@ internal class StartMenu : IMenu
 		_context = context;
 	}
 
+	// Start Menu Loop
 	public void Start()
 	{
-		int choice = MenuHelper.DisplayOptionsAndGetIntResult(["Manage contacts", "Manage categories", "Exit"]);
-
-		switch(choice)
+		do
 		{
-			case 1:
-				ContactMenu menu = new(_context);
-				break;
-			case 2:
-				CategoryMenu categoryMenu = new(_context);
-				break;
-			case 3:
-				Environment.Exit(0);
-				break;
-			default:
-				break;
-		}		
+			Console.Clear();
+			int choice = MenuHelper.DisplayOptionsAndGetIntResult(["Manage contacts", "Manage categories", "Exit"]);
+
+			switch (choice)
+			{
+				case 1:
+					ContactMenu contactMenu = new(_context);
+					contactMenu.Start();
+					break;
+				case 2:
+					CategoryMenu categoryMenu = new(_context);
+					categoryMenu.Start();
+					break;
+				case 3:
+					Environment.Exit(0);
+					break;
+				default:
+					break;
+			}
+		}
+		while (true);		
 	}
 }

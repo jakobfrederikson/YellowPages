@@ -7,12 +7,19 @@ using YellowPages.Controllers;
 
 namespace YellowPages.Menu;
 
-internal class CategoryMenu
+internal class CategoryMenu : IMenu
 {
 	private readonly CategoryController _categoryController;
+	private readonly ContactController _contactController;
 
 	public CategoryMenu(YellowPagesContext context)
 	{
 		_categoryController = new(context);
+		_contactController = new(context);
+	}
+
+	public void Start()
+	{
+		MenuHelper.DisplayMenuHeader("Categories menu");
 	}
 }
