@@ -154,6 +154,7 @@ internal class ContactMenu : IMenu
 				addContactToCategory(contact);
 				break;
 			case 5:
+				removeContactFromCategory(contact);
 				return;
 			default:
 				return;
@@ -246,11 +247,8 @@ internal class ContactMenu : IMenu
 	{
 		MenuHelper.DisplayMenuHeader("Add Contact to Category");
 
-		// Fetch available categories from the controller
-		var categories = _categoryController.QueryAll();
-
 		// Check if there are any categories to add to
-		if (categories == null || categories.Count == 0)
+		if (contact.Categories == null || !contact.Categories.Any())
 		{
 			Console.WriteLine("No categories available.");
 			MenuHelper.PressAnyKeyToContinue();
@@ -259,18 +257,17 @@ internal class ContactMenu : IMenu
 
 		// Prompt user to choose a category
 		int categoryChoice = MenuHelper.DisplayOptionsAndGetIntResult(
-			categories.Select(c => c.Name).ToArray(),
+			contact.Categories.Select(c => c.Name).ToArray(),
 			"Select a category to add the contact to: ");
 
-		if (categoryChoice < 1 || categoryChoice > categories.Count)
+		if (categoryChoice < 1 || categoryChoice > contact.Categories.Count)
 		{
 			Console.WriteLine("Invalid choice.");
 			MenuHelper.PressAnyKeyToContinue();
 			return;
 		}
 
-		// Retrieve the selected category
-		var selectedCategory = categories[categoryChoice - 1];
+		var selectedCategory = contact.Categories[categoryChoice - 1];
 
 		// Check if the contact is already in the category
 		if (contact.Categories.Any(c => c.CategoryId == selectedCategory.CategoryId))
@@ -285,6 +282,37 @@ internal class ContactMenu : IMenu
 
 		// Confirm the addition
 		Console.WriteLine($"Contact '{contact.Name}' has been added to category '{selectedCategory.Name}'.");
+		MenuHelper.PressAnyKeyToContinue();
+	}
+
+	private void removeContactFromCategory(Contact contact)
+	{
+		MenuHelper.DisplayMenuHeader("Remove Contact from Category");
+
+		if (contact.Categories == null || !contact.Categories.Any())
+		{
+			Console.WriteLine("No categories available.");
+			MenuHelper.PressAnyKeyToContinue();
+			return;
+		}
+
+		int categoryChoice = MenuHelper.DisplayOptionsAndGetIntResult(
+			contact.Categories.Select(c => c.Name).ToArray(),
+			"Select a category to remove the contact from: ");
+
+		if (categoryChoice < 1 || categoryChoice > contact.Categories.Count)
+		{
+			Console.WriteLine("Invalid choice.");
+			MenuHelper.PressAnyKeyToContinue();
+			return;
+		}
+
+
+		var selectedCategory = contact.Categories[categoryChoice - 1];
+
+		contact.Categories.Remove(selectedCategory);
+
+		Console.WriteLine($"Contact '{contact.Name}' has been removed from category '{selectedCategory.Name}'.");
 		MenuHelper.PressAnyKeyToContinue();
 	}
 }
