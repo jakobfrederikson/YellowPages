@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using YellowPages.Models;
 
 namespace YellowPages.Controllers;
 
@@ -19,7 +21,7 @@ internal abstract class Controller<T> where T : class
 		_context = context;
 	}
 
-	public virtual void Create(T entity)
+	public void Create(T entity)
 	{
 		try
 		{
@@ -33,7 +35,7 @@ internal abstract class Controller<T> where T : class
 		}
 	}
 
-	public T Query(int id)
+	public virtual T Query(int id)
 	{
 		try
 		{
@@ -50,11 +52,23 @@ internal abstract class Controller<T> where T : class
 		}
 	}
 
-	public List<T> QueryAll()
+	public virtual List<T> QueryAll()
 	{
 		try
 		{
-			var entities = _context.Set<T>().ToList();
+			var query = _context.Set<T>().AsQueryable();
+
+			if (typeof(T) == typeof(Contact))
+			{
+				query = query.Include("Categories");
+			}
+			else if (typeof(T) == typeof(Category))
+			{
+				query = query.Include("Contacts");
+			}
+
+			var entities = query.ToList();
+
 			if (entities == null)
 				throw new Exception($"Unable to find a set of {typeof(T).Name}.");
 

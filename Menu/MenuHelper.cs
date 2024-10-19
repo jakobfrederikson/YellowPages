@@ -56,14 +56,16 @@ internal class MenuHelper
 				// Handle the "List<Category>" or "List<Contact>" properties in each model
 				if (value is System.Collections.IEnumerable modelList && value is not string)
 				{
-					if (modelList.Cast<object>().Any())
+					var listItems = modelList.Cast<object>().ToList();
+
+					if (listItems.Any())
 					{
 						WriteLineInColour($"{prop.Name.PadRight(maxPropLength)}: ", ConsoleColor.Yellow);
-						Console.WriteLine();
-						foreach (var modelListItem in modelList)
+						foreach (var listItem in listItems)
 						{
+							var nameProp = listItem.GetType().GetProperty("Name");
 							WriteInColour(" - ", ConsoleColor.Yellow);
-							Console.Write(modelListItem);
+							Console.Write(nameProp.GetValue(listItem));
 							Console.WriteLine();
 						}						
 					}
@@ -104,14 +106,16 @@ internal class MenuHelper
 			// Handle the "List<Category>" or "List<Contact>" properties in each model
 			if (value is System.Collections.IEnumerable modelList && value is not string)
 			{
-				if (modelList.Cast<object>().Any())
+				var listItems = modelList.Cast<object>().ToList();
+
+				if (listItems.Any())
 				{
 					WriteLineInColour($"{prop.Name.PadRight(maxPropLength)}: ", ConsoleColor.Yellow);
-					Console.WriteLine();
-					foreach (var modelListItem in modelList)
+					foreach (var listItem in listItems)
 					{
+						var nameProp = listItem.GetType().GetProperty("Name");
 						WriteInColour(" - ", ConsoleColor.Yellow);
-						Console.Write(modelListItem);
+						Console.Write(nameProp.GetValue(listItem));
 						Console.WriteLine();
 					}
 				}
@@ -145,5 +149,11 @@ internal class MenuHelper
 		ConsoleColor defaultColor = Console.ForegroundColor;
 		Console.WriteLine(message, Console.ForegroundColor = consoleColor);
 		Console.ForegroundColor = defaultColor;
+	}
+
+	public static void PressAnyKeyToContinue(string message = "")
+	{
+		Console.Write($"{message}Press any key to continue... ");
+		Console.ReadKey();
 	}
 }
