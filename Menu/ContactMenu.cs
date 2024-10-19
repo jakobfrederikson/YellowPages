@@ -54,18 +54,14 @@ internal class ContactMenu : IMenu
 	{
 		MenuHelper.DisplayMenuHeader("Create a contact");
 
-		string contactName = getValidName();
-
-		string contactEmail = getValidEmail();
-
-		string phoneNumber = getValidPhoneNumber();
-
-		_contactController.Create(new Contact
+		var newContact = new Contact
 		{
-			Name = contactName,
-			Email = contactEmail,
-			PhoneNumber = phoneNumber
-		});
+			Name = getValidName(),
+			Email = getValidEmail(),
+			PhoneNumber = getValidPhoneNumber(),
+		};
+
+		_contactController.Create(newContact);
 	}	
 
 	private void QueryContact()
@@ -73,82 +69,86 @@ internal class ContactMenu : IMenu
 		MenuHelper.DisplayMenuHeader("View a contact");
 
 		var allContacts = _contactController.QueryAll();
-		
-		// Check if user has any contacts and display them, if not tell them they have no contacts
-		if (allContacts != null && allContacts.Any())
+		if (allContacts == null || !allContacts.Any())
 		{
-			MenuHelper.DisplayDataSet(allContacts);
-
-			Console.Write("Enter a contact ID: ");
-			string contactIdInput;
-			int contactId;
-			Contact contact = null;
-
-			// Ask for a contact's ID, then display options for the contact if they exist
-			do
-			{
-				contactIdInput = Console.ReadLine();
-
-				if (int.TryParse(contactIdInput, out contactId))
-				{
-					contact = _contactController.Query(contactId);
-
-					if (contact != null)
-					{						
-						MenuHelper.DisplayMenuHeader("Contact options");
-						MenuHelper.DisplaySingleData(contact);
-						int choice = MenuHelper.DisplayOptionsAndGetIntResult(["Update contact", "Delete contact", "Back to manage contacts"]);
-
-						switch (choice)
-						{
-							case 1:
-								UpdateContact(contact);
-								break;
-							case 2:
-								DeleteContact(contact);
-								break;
-							case 3:
-								return;
-							default:
-								Console.WriteLine("Invalid choice. Returning to contacts menu.");
-								return;
-						}
-					}
-				}
-			} while (contact == null);
+			Console.WriteLine("You have no contacts.");
+			MenuHelper.PressAnyKeyToContinue();
+			return;
 		}
-		else Console.WriteLine("You have no contacts.");
 
-		MenuHelper.PressAnyKeyToContinue();
+		MenuHelper.DisplayDataSet(allContacts);
+
+		Console.Write("Enter a contact ID: ");
+		int contactId;
+		Contact contact;
+
+		while (true)
+		{
+			string contactIdInput = Console.ReadLine();
+			if (int.TryParse(contactIdInput, out contactId))
+			{
+				contact = _contactController.Query(contactId);
+				if (contact != null)
+				{
+					DisplayContactOptions(contact);
+					return;
+				}
+			}
+			Console.WriteLine("Invalid contact ID. Please try again.");
+		}
+	}
+
+	private void DisplayContactOptions(Contact contact)
+	{
+		MenuHelper.DisplayMenuHeader("Contact options");
+		MenuHelper.DisplaySingleData(contact);
+
+		int choice = MenuHelper.DisplayOptionsAndGetIntResult(
+			["Update contact", "Delete contact", "Back to manage contacts"]
+		);
+
+		switch (choice)
+		{
+			case 1:
+				UpdateContact(contact);
+				break;
+			case 2:
+				DeleteContact(contact);
+				break;
+			case 3:
+				return; // Go back to manage contacts
+			default:
+				Console.WriteLine("Invalid choice. Returning to contacts menu.");
+				break;
+		}
 	}
 
 	private void UpdateContact(Contact contact)
 	{
 		MenuHelper.DisplayMenuHeader("Update a contact");
-
 		MenuHelper.DisplaySingleData(contact);
 
-		int choice = MenuHelper.DisplayOptionsAndGetIntResult(["Name", "Email", "Phone", "Add Category", "Remove Category", "Back"], "Select option to update: ");
+		int choice = MenuHelper.DisplayOptionsAndGetIntResult(
+			["Name", "Email", "Phone", "Add Category", "Remove Category", "Back"],
+			"Select option to update: "
+		);
 
 		switch (choice)
 		{
 			case 1:
-				string oldName = contact.Name;
+				Console.WriteLine($"Old Name: {contact.Name}");
 				contact.Name = getValidName();
-				Console.WriteLine($"Old name: {oldName}");
-				Console.WriteLine($"New name: {contact.Name}");
+				Console.WriteLine($"New Name: {contact.Name}");
 				break;
 			case 2:
-				string oldEmail = contact.Email;
+				Console.WriteLine($"Old Email: {contact.Email}");
 				contact.Email = getValidEmail();
-				Console.WriteLine($"Old email: {oldEmail}");
-				Console.WriteLine($"New email: {contact.Email}");
+				Console.WriteLine($"New Email: {contact.Email}");
 				break;
 			case 3:
-				string oldPhoneNumber = contact.PhoneNumber;
+				Console.WriteLine($"Old Phone Number: {contact.PhoneNumber}");
 				contact.PhoneNumber = getValidPhoneNumber();
-				Console.WriteLine($"Old phone number: {oldPhoneNumber}");
-				Console.WriteLine($"New phone number: {contact.PhoneNumber}");
+				Console.WriteLine($"New Phone Number: {contact.PhoneNumber}");
 				break;
 			case 4:
 				addContactToCategory(contact);
@@ -167,15 +167,42 @@ internal class ContactMenu : IMenu
 			MenuHelper.PressAnyKeyToContinue();
 	}
 
+	private void ConfirmUpdate(Contact contact)
+	{
+		int choice = MenuHelper.DisplayOptionsAndGetIntResult(
+			["Yes", "No"], "Confirm update: "
+		);
+		if (choice == 1)
+		{
+			_contactController.Update(contact);
+		}
+		else
+		{
+			MenuHelper.PressAnyKeyToContinue();
+		}
+	}
+
 	private void DeleteContact(Contact contact)
 	{
 		MenuHelper.DisplayMenuHeader("Delete a contact");
-
 		MenuHelper.DisplaySingleData(contact);
 
-		// Ask are you sure
-		// Get 1. Yes or 2. No
-		// Delete if 1, exit method if 2.
+		// Ask for confirmation
+		int choice = MenuHelper.DisplayOptionsAndGetIntResult(
+			["Yes", "No"], "Are you sure you want to delete this contact? "
+		);
+
+		if (choice == 1)
+		{
+			_contactController.Delete(contact);
+			Console.WriteLine($"Contact '{contact.Name}' has been deleted.");
+		}
+		else
+		{
+			Console.WriteLine("Deletion cancelled.");
+		}
+
+		MenuHelper.PressAnyKeyToContinue();
 	}
 
 	//
@@ -247,29 +274,27 @@ internal class ContactMenu : IMenu
 	{
 		MenuHelper.DisplayMenuHeader("Add Contact to Category");
 
-		// Check if there are any categories to add to
-		if (contact.Categories == null || !contact.Categories.Any())
+		var allCategories = _categoryController.QueryAll();
+		if (allCategories == null || !allCategories.Any())
 		{
 			Console.WriteLine("No categories available.");
 			MenuHelper.PressAnyKeyToContinue();
 			return;
 		}
 
-		// Prompt user to choose a category
 		int categoryChoice = MenuHelper.DisplayOptionsAndGetIntResult(
-			contact.Categories.Select(c => c.Name).ToArray(),
-			"Select a category to add the contact to: ");
+			allCategories.Select(c => c.Name).ToArray(),
+			"Select a category to add the contact to: "
+		);
 
-		if (categoryChoice < 1 || categoryChoice > contact.Categories.Count)
+		if (categoryChoice < 1 || categoryChoice > allCategories.Count)
 		{
 			Console.WriteLine("Invalid choice.");
 			MenuHelper.PressAnyKeyToContinue();
 			return;
 		}
 
-		var selectedCategory = contact.Categories[categoryChoice - 1];
-
-		// Check if the contact is already in the category
+		var selectedCategory = allCategories[categoryChoice - 1];
 		if (contact.Categories.Any(c => c.CategoryId == selectedCategory.CategoryId))
 		{
 			Console.WriteLine($"Contact is already in the category '{selectedCategory.Name}'.");
@@ -277,10 +302,7 @@ internal class ContactMenu : IMenu
 			return;
 		}
 
-		// Add the contact to the selected category
 		contact.Categories.Add(selectedCategory);
-
-		// Confirm the addition
 		Console.WriteLine($"Contact '{contact.Name}' has been added to category '{selectedCategory.Name}'.");
 		MenuHelper.PressAnyKeyToContinue();
 	}
@@ -298,7 +320,8 @@ internal class ContactMenu : IMenu
 
 		int categoryChoice = MenuHelper.DisplayOptionsAndGetIntResult(
 			contact.Categories.Select(c => c.Name).ToArray(),
-			"Select a category to remove the contact from: ");
+			"Select a category to remove the contact from: "
+		);
 
 		if (categoryChoice < 1 || categoryChoice > contact.Categories.Count)
 		{
@@ -307,11 +330,8 @@ internal class ContactMenu : IMenu
 			return;
 		}
 
-
 		var selectedCategory = contact.Categories[categoryChoice - 1];
-
 		contact.Categories.Remove(selectedCategory);
-
 		Console.WriteLine($"Contact '{contact.Name}' has been removed from category '{selectedCategory.Name}'.");
 		MenuHelper.PressAnyKeyToContinue();
 	}
