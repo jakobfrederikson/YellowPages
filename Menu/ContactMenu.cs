@@ -167,21 +167,6 @@ internal class ContactMenu : IMenu
 			MenuHelper.PressAnyKeyToContinue();
 	}
 
-	private void ConfirmUpdate(Contact contact)
-	{
-		int choice = MenuHelper.DisplayOptionsAndGetIntResult(
-			["Yes", "No"], "Confirm update: "
-		);
-		if (choice == 1)
-		{
-			_contactController.Update(contact);
-		}
-		else
-		{
-			MenuHelper.PressAnyKeyToContinue();
-		}
-	}
-
 	private void DeleteContact(Contact contact)
 	{
 		MenuHelper.DisplayMenuHeader("Delete a contact");
